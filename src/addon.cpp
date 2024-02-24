@@ -32,11 +32,6 @@ NAN_METHOD(Addon::configure)
         191, 193, 194, 196, 198, 200, 202, 204, 206, 208, 210, 212, 214, 216, 218, 220,
         222, 224, 227, 229, 231, 233, 235, 237, 239, 241, 244, 246, 248, 250, 252, 255};
 
-    if (ws2811.freq != 0)
-    {
-        return Nan::ThrowError("ws281x already configured.");
-    }
-
     ws2811.freq = DEFAULT_TARGET_FREQ;
     ws2811.dmanum = DEFAULT_DMA;
 
@@ -55,7 +50,7 @@ NAN_METHOD(Addon::configure)
 
     if (info.Length() != 1)
     {
-        return Nan::ThrowError("configure requires an argument.");
+        return Nan::ThrowError("configure() requires an argument.");
     }
 
     v8::Local<v8::Object> options = v8::Local<v8::Object>::Cast(info[0]);
@@ -113,20 +108,14 @@ NAN_METHOD(Addon::configure)
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // stripType/strip/type
+    // strip type
     if (true)
     {
         Nan::MaybeLocal<v8::Value> maybe_stripType;
         v8::Local<v8::Value> stripType;
 
-        if (Nan::Has(options, Nan::New<v8::String>("strip").ToLocalChecked()).ToChecked())
+        if (Nan::Has(options, Nan::New<v8::String>("type").ToLocalChecked()).ToChecked())
             maybe_stripType = Nan::Get(options, Nan::New<v8::String>("type").ToLocalChecked());
-
-        if (Nan::Has(options, Nan::New<v8::String>("strip").ToLocalChecked()).ToChecked())
-            maybe_stripType = Nan::Get(options, Nan::New<v8::String>("strip").ToLocalChecked());
-
-        if (Nan::Has(options, Nan::New<v8::String>("stripType").ToLocalChecked()).ToChecked())
-            maybe_stripType = Nan::Get(options, Nan::New<v8::String>("stripType").ToLocalChecked());
 
         if (maybe_stripType.ToLocal(&stripType))
         {

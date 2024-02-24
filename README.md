@@ -1,196 +1,121 @@
 # rpi-ws281x
 
-This is a npm module for connecting a Raspbery Pi to Neopixel strips. It uses the 
+This is a npm module for connecting a Raspbery Pi to Neopixel strips. It uses the
 library from **jgarff** https://github.com/jgarff/rpi_ws281x.
 
 ## Installation
 
-````bash
-$ npm install rpi-ws281x --save
-````
-
+```bash
+$ npm install @bjoerge/rpi-ws281x --save
+```
 
 ## Usage
 
-````javascript
-
-var ws281x = require('rpi-ws281x');
+```javascript
+var ws281x = require("@bjoerge/rpi-ws281x")
 
 // One time initialization
-ws281x.configure({leds:16});
+ws281x.configure({leds: 16})
 
 // Create my pixels
-var pixels = new Uint32Array(16);
+var pixels = new Uint32Array(16)
 
 // Render pixels to the Neopixel strip
-ws281x.render(pixels);
-
-````
-
+ws281x.render(pixels)
+```
 
 ## Methods
 
-This module is simple and only has three methods **configure()**, **render()** and **reset()**.
+This module is simple and only has four methods **configure()**, **render()**, **reset()** and **sleep()**.
 
-- **configure(options)**  -	Configures the ws281x strip. Must be called once and before anything else. See
-							examples below.
-- **render(pixels)**      -	Renders the pixels specified to the strip. The **pixels** parameter must 
-							be an **Uint32Array** representing the color values of all pixels
-                        	and the same size as the number of leds specified when configuring.
-- **reset()**             -	Resets configuration. 
-- **sleep(ms)**           -	Sleeps for the specified number of milliseconds. 
-
+- **configure(options)** - Configures the ws281x strip. Must be called once and before anything else. See
+  examples below.
+- **render(pixels)** - Renders the pixels specified to the strip. The **pixels** parameter must
+  be an **Uint32Array** representing the color values of all pixels
+  and the same size as the number of leds specified when configuring.
+- **reset()** - Resets configuration.
+- **sleep(ms)** - Sleeps for the specified number of milliseconds.
 
 ## Examples
 
 ### Filling the Neopixel strip with a color
 
-````javascript
+```typescript
+import ws281x from "@bjoerge/rpi-ws281x"
 
-var ws281x = require('rpi-ws281x');
+const LEDS = 24
 
-class Example {
+ws281x.configure({
+  leds: LEDS,
+  dma: 10,
+  brightness: 255,
+  gpio: 18,
+  type: "rgb",
+})
 
-    constructor() {
-        this.config = {};
+// Create a pixel array matching the number of leds.
+// This must be an instance of Uint32Array.
+const pixels = new Uint32Array(LEDS)
 
-        // Number of leds in my strip
-        this.config.leds = 169;
+// Create a fill color with red/green/blue.
+const red = 255,
+  green = 0,
+  blue = 0
 
-        // Use DMA 10 (default 10)
-        this.config.dma = 10;
+const color = (red << 16) | (green << 8) | blue
 
-        // Set full brightness, a value from 0 to 255 (default 255)
-        this.config.brightness = 255;
+for (let i = 0; i < LEDS; i++) {
+  pixels[i] = color
+}
 
-        // Set the GPIO number to communicate with the Neopixel strip (default 18)
-        this.config.gpio = 18;
-
-        // The RGB sequence may vary on some strips. Valid values
-        // are "rgb", "rbg", "grb", "gbr", "bgr", "brg".
-        // Default is "rgb".
-        // RGBW strips are not currently supported.
-        this.config.stripType = 'grb';
-
-        // Configure ws281x
-        ws281x.configure(this.config);
-    }
-
-    run() {
-        // Create a pixel array matching the number of leds.
-        // This must be an instance of Uint32Array.
-        var pixels = new Uint32Array(this.config.leds);
-
-        // Create a fill color with red/green/blue.
-        var red = 255, green = 0, blue = 0;
-        var color = (red << 16) | (green << 8)| blue;
-
-        for (var i = 0; i < this.config.leds; i++)
-            pixels[i] = color;
-
-        // Render to strip
-        ws281x.render(pixels);
-    }
-    
-};
-
-var example = new Example();
-example.run();
-
-````
+// Render to strip
+ws281x.render(pixels)
+```
 
 ### Walking a pixel through the strip
 
-````javascript
+```javascript
 
-var ws281x = require('rpi-ws281x');
-
-class Example {
-
-    constructor() {
-        // Current pixel position
-        this.offset = 0;
-
-        // Set my Neopixel configuration
-        this.config = {leds:169};
-
-        // Configure ws281x
-        ws281x.configure(this.config);
-    }
-
-    loop() {
-        var pixels = new Uint32Array(this.config.leds);
-
-        // Set a specific pixel
-        pixels[this.offset] = 0xFF0000;
-
-        // Move on to next
-        this.offset = (this.offset + 1) % this.config.leds;
-
-        // Render to strip
-        ws281x.render(pixels);
-    }
-
-    run() {
-        // Loop every 100 ms
-        setInterval(this.loop.bind(this), 100);
-    }
-};
-
-var example = new Example();
-example.run();
-
-````
+```
 
 ### Walking a pixel with pixel mapping
 
-````javascript
+```javascript
+import ws281x, {alternatingMatrixMapping, remap} from "@bjoerge/rpi-ws281x"
 
-var ws281x = require('rpi-ws281x');
+// By setting width and height instead of number of leds
+// you may use named pixel mappings.
+// Currently "matrix" and "alternating-matrix" are
+// supported. You may also set the "map" property
+// to a custom Uint32Array to define your own map.
 
-class Example {
+const panel = {
+	width: 13,
+	height: 13,
+}
 
-    constructor() {
-        // Current pixel position
-        this.offset = 0;
+const leds = panel.width * panel.height
 
-        // Set my Neopixel configuration
-        this.config = {};
+// Configure ws281x
+ws281x.configure({leds})
 
-        // By setting width and height instead of number of leds
-        // you may use named pixel mappings.
-        // Currently "matrix" and "alternating-matrix" are
-        // supported. You may also set the "map" property
-        // to a custom Uint32Array to define your own map.
-        this.config.width = 13;
-        this.config.height = 13;
-        this.config.map = 'alternating-matrix';
+// Current pixel position
+let offset = 0
 
-        // Configure ws281x
-        ws281x.configure(this.config);
-    }
+const mapping = alternatingMatrixMapping(panel)
 
-    loop() {
-        var leds = this.config.width * this.config.height;
-        var pixels = new Uint32Array(leds);
+function loop() {
+	const pixels = new Uint32Array(leds)
 
-        // Set a specific pixel
-        pixels[this.offset] = 0xFF0000;
+	// Set a specific pixel
+	pixels[offset] = 0xff0000
 
-        // Move on to next
-        this.offset = (this.offset + 1) % leds;
+	// Move on to next
+	offset = (offset + 1) % leds
 
-        // Render to strip
-        ws281x.render(pixels);
-    }
+	// Render to strip
+	ws281x.render(remap(pixels, mapping))
+}
 
-    run() {
-        // Loop every 100 ms
-        setInterval(this.loop.bind(this), 100);
-    }
-};
-
-var example = new Example();
-example.run();
-
-````
+setInterval(loop, 100)
+```
